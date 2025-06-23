@@ -10,6 +10,9 @@ function App() {
   const tshirtImgRef = useRef(null)
   const [isDragging, setIsDragging] = useState(false)
   const dragOffset = useRef({ x: 0, y: 0 })
+  const [isPinching, setIsPinching] = useState(false)
+  const pinchStartDist = useRef(0)
+  const pinchStartScale = useRef(1)
 
   // Load the t-shirt image once
   useEffect(() => {
@@ -188,33 +191,54 @@ function App() {
     }
   }
 
+  const getTouchesDistance = (touch1, touch2) => {
+    const dx = touch2.clientX - touch1.clientX
+    const dy = touch2.clientY - touch1.clientY
+    return Math.sqrt(dx * dx + dy * dy)
+  }
+
   const handleTouchStart = (e) => {
-    if (e.touches.length !== 1) return
-    const { x, y } = getTouchPos(e.touches[0])
-    const d = getDesignAtCoords(x, y)
-    if (d) {
-      setSelectedDesignId(d.id)
-      setIsDragging(true)
-      dragOffset.current = { x: x - d.x, y: y - d.y }
-    } else {
-      setSelectedDesignId(null)
+    if (e.touches.length === 1) {
+      const { x, y } = getTouchPos(e.touches[0])
+      const d = getDesignAtCoords(x, y)
+      if (d) {
+        setSelectedDesignId(d.id)
+        setIsDragging(true)
+        dragOffset.current = { x: x - d.x, y: y - d.y }
+      } else {
+        setSelectedDesignId(null)
+      }
+      setIsPinching(false)
+    } else if (e.touches.length === 2 && selectedDesign) {
+      setIsDragging(false)
+      setIsPinching(true)
+      pinchStartDist.current = getTouchesDistance(e.touches[0], e.touches[1])
+      pinchStartScale.current = selectedDesign.scale
     }
   }
 
   const handleTouchMove = (e) => {
-    if (!isDragging || !selectedDesign) return
-    if (e.touches.length !== 1) return
+    if (isPinching && e.touches.length === 2 && selectedDesign) {
+      const newDist = getTouchesDistance(e.touches[0], e.touches[1])
+      let newScale = pinchStartScale.current * (newDist / pinchStartDist.current)
+      newScale = Math.max(0.1, Math.min(newScale, 2)) // Clamp scale between 0.1 and 2
+      updateSelectedDesign('scale', newScale)
+      e.preventDefault()
+      return
+    }
+    if (!isDragging || !selectedDesign || e.touches.length !== 1) return
     const { x, y } = getTouchPos(e.touches[0])
     const newX = x - dragOffset.current.x
     const newY = y - dragOffset.current.y
     setDesigns(designs => designs.map(d =>
       d.id === selectedDesignId ? { ...d, x: newX, y: newY } : d
     ))
-    e.preventDefault() // Prevent scrolling while dragging
+    e.preventDefault()
   }
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e) => {
     setIsDragging(false)
+    setIsPinching(false)
   }
 
   useEffect(() => {
@@ -237,12 +261,19 @@ function App() {
       window.removeEventListener('touchend', handleTouchEnd)
     }
     // eslint-disable-next-line
-  }, [designs, selectedDesign, isDragging])
+  }, [designs, selectedDesign, isDragging, isPinching])
 
   return (
     <div className="editor-container">
-      <div className="canvas-container">
+      <div className="canvas-container" style={{ position: 'relative' }}>
         <canvas ref={canvasRef} id="design-canvas" width="600" height="600" />
+        {/* Floating label for size and rotation */}
+        {selectedDesign && (
+          <div className="floating-label">
+            <span>Size: {Math.round(selectedDesign.scale * 100)}%</span>
+            <span style={{ marginLeft: 12 }}>Rotation: {Math.round(selectedDesign.rotation * 180 / Math.PI)}°</span>
+          </div>
+        )}
       </div>
 
       <div className="controls">
