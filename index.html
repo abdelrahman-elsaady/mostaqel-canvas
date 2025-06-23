@@ -270,18 +270,18 @@
         tshirtImg.crossOrigin = "Anonymous";
 
         tshirtImg.onerror = () => {
-            console.error('Failed to load "t-shirt.png".');
-            alert('ERROR: Could not load the t-shirt image. Make sure the file is named "t-shirt.png" (with a hyphen) and is in your project root.');
+            console.error('Failed to load "tshirt.png".');
+            alert('ERROR: Could not load the t-shirt image. Make sure the file is named "tshirt.png" (no hyphen) and is in your project root.');
         };
 
         tshirtImg.onload = () => {
-            console.log('Real "t-shirt.png" image successfully loaded.');
+            console.log('Real "tshirt.png" image successfully loaded.');
             // Initialize the application now that we have the image
             setupCanvasQuality();
         };
 
-        // This path should work on Vercel if "t-shirt.png" is in the root directory
-        tshirtImg.src = '/t-shirt.png';
+        // This path should work on Vercel if "tshirt.png" is in the root directory
+        tshirtImg.src = '/tshirt.png';
 
         let designs = [];
         let selectedDesign = null;
