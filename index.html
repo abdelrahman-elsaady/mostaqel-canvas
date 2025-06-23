@@ -266,56 +266,23 @@
         const ctx = canvas.getContext('2d');
         const tshirtImg = new Image();
         
-        // Handle image loading errors
-        tshirtImg.onerror = function() {
-            console.error('Failed to load t-shirt image');
-            alert('Error: Could not load t-shirt image. Please check if t-shirt.png exists in the same folder.');
+        // This is crucial for preventing canvas errors on deployed servers
+        tshirtImg.crossOrigin = "Anonymous";
+
+        tshirtImg.onerror = () => {
+            console.error('Failed to load "t-shirt.png".');
+            alert('ERROR: Could not load the t-shirt image. Make sure the file is named "t-shirt.png" (with a hyphen) and is in your project root.');
         };
-        
-        tshirtImg.onload = function() {
-            console.log('T-shirt image loaded successfullyy');
-            redrawCanvas();
+
+        tshirtImg.onload = () => {
+            console.log('Real "t-shirt.png" image successfully loaded.');
+            // Initialize the application now that we have the image
+            setupCanvasQuality();
         };
-        
-        // Try multiple paths for the image
-        function loadTshirtImage() {
-            const imagePaths = [
-                './tshirt.png',
-                '/tshirt.png',
-                'tshirt.png',
-               './images/tshirt.png',
-                '/images/tshirt.png'
-            ];
-            
-            let currentPathIndex = 0;
-            
-            function tryNextPath() {
-                if (currentPathIndex < imagePaths.length) {
-                    console.log('Trying to load image from:', imagePaths[currentPathIndex]);
-                    tshirtImg.src = imagePaths[currentPathIndex];
-                    currentPathIndex++;
-                } else {
-                    console.error('All image paths failed');
-                    alert('Error: Could not load t-shirt image from any location. Please ensure t-shirt.png is in the project folder.');
-                }
-            }
-            
-            tshirtImg.onerror = function() {
-                console.log('Failed to load from:', tshirtImg.src);
-                tryNextPath();
-            };
-            
-            tshirtImg.onload = function() {
-                console.log('T-shirt image loaded successfully from:', tshirtImg.src);
-                redrawCanvas();
-            };
-            
-            tryNextPath();
-        }
-        
-        // Load the image
-        loadTshirtImage();
-        
+
+        // This path should work on Vercel if "t-shirt.png" is in the root directory
+        tshirtImg.src = '/t-shirt.png';
+
         let designs = [];
         let selectedDesign = null;
         let isDragging = false;
@@ -340,12 +307,8 @@
             ctx.scale(dpr, dpr);
             
             // Set the CSS size back to the original size
-            canvas.style.width = rect.width + 'px';
-            canvas.style.height = rect.height + 'px';
-            
-            // Set additional quality settings
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
             
             // Redraw after setup
             redrawCanvas();
@@ -353,11 +316,11 @@
         
         // Handle window resize
         function handleResize() {
-            setupCanvasQuality();
+            if (tshirtImg.complete) {
+                setupCanvasQuality();
+            }
         }
         
-        // Call setup when page loads
-        window.addEventListener('load', setupCanvasQuality);
         window.addEventListener('resize', handleResize);
         
         // Canvas event listeners
@@ -443,6 +406,12 @@
         }
         
         function redrawCanvas() {
+            if (!tshirtImg) {
+                console.log('T-shirt image not ready yet, waiting...');
+                return;
+            }
+            
+            console.log('Redrawing canvas with t-shirt...');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Draw t-shirt with color using the same technique as the original code
