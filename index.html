@@ -264,19 +264,18 @@
     <script>
         const canvas = document.getElementById('design-canvas');
         const ctx = canvas.getContext('2d');
-        let tshirtImg = null;
+        const tshirtImg = new Image();
         
         // Handle image loading errors
-        function handleImageError() {
+        tshirtImg.onerror = function() {
             console.error('Failed to load t-shirt image');
-            console.log('Creating fallback t-shirt shape...');
-            createFallbackTshirt();
-        }
+            alert('Error: Could not load t-shirt image. Please check if t-shirt.png exists in the same folder.');
+        };
         
-        function handleImageLoad() {
-            console.log('T-shirt image loaded successfully');
+        tshirtImg.onload = function() {
+            console.log('T-shirt image loaded successfullyy');
             redrawCanvas();
-        }
+        };
         
         // Try multiple paths for the image
         function loadTshirtImage() {
@@ -284,7 +283,7 @@
                 './tshirt.png',
                 '/tshirt.png',
                 'tshirt.png',
-                './images/tshirt.png',
+               './images/tshirt.png',
                 '/images/tshirt.png'
             ];
             
@@ -293,75 +292,25 @@
             function tryNextPath() {
                 if (currentPathIndex < imagePaths.length) {
                     console.log('Trying to load image from:', imagePaths[currentPathIndex]);
-                    const img = new Image();
-                    img.onerror = function() {
-                        console.log('Failed to load from:', imagePaths[currentPathIndex]);
-                        currentPathIndex++;
-                        tryNextPath();
-                    };
-                    img.onload = function() {
-                        console.log('T-shirt image loaded successfully from:', imagePaths[currentPathIndex]);
-                        tshirtImg = img;
-                        redrawCanvas();
-                    };
-                    img.src = imagePaths[currentPathIndex];
+                    tshirtImg.src = imagePaths[currentPathIndex];
+                    currentPathIndex++;
                 } else {
-                    console.log('All image paths failed, using fallback t-shirt shape');
-                    createFallbackTshirt();
+                    console.error('All image paths failed');
+                    alert('Error: Could not load t-shirt image from any location. Please ensure t-shirt.png is in the project folder.');
                 }
             }
             
-            tryNextPath();
-        }
-        
-        // Create a fallback t-shirt shape when image fails to load
-        function createFallbackTshirt() {
-            console.log('Creating fallback t-shirt...');
-            // Create a canvas to draw a simple t-shirt shape
-            const fallbackCanvas = document.createElement('canvas');
-            fallbackCanvas.width = 400;
-            fallbackCanvas.height = 400;
-            const fallbackCtx = fallbackCanvas.getContext('2d');
+            tshirtImg.onerror = function() {
+                console.log('Failed to load from:', tshirtImg.src);
+                tryNextPath();
+            };
             
-            // Clear canvas
-            fallbackCtx.clearRect(0, 0, 400, 400);
-            
-            // Draw a simple t-shirt shape
-            fallbackCtx.fillStyle = 'white';
-            fallbackCtx.fillRect(0, 0, 400, 400);
-            
-            // Draw t-shirt outline
-            fallbackCtx.strokeStyle = '#333';
-            fallbackCtx.lineWidth = 2;
-            
-            // T-shirt body
-            fallbackCtx.beginPath();
-            fallbackCtx.rect(100, 150, 200, 200);
-            fallbackCtx.stroke();
-            
-            // T-shirt sleeves
-            fallbackCtx.beginPath();
-            fallbackCtx.rect(50, 180, 50, 80);
-            fallbackCtx.rect(300, 180, 50, 80);
-            fallbackCtx.stroke();
-            
-            // Neck
-            fallbackCtx.beginPath();
-            fallbackCtx.arc(200, 170, 20, 0, 2 * Math.PI);
-            fallbackCtx.stroke();
-            
-            // Convert to image
-            const fallbackImg = new Image();
-            fallbackImg.onload = function() {
-                console.log('Fallback t-shirt created successfully');
-                tshirtImg = fallbackImg;
+            tshirtImg.onload = function() {
+                console.log('T-shirt image loaded successfully from:', tshirtImg.src);
                 redrawCanvas();
             };
-            fallbackImg.onerror = function() {
-                console.error('Failed to create fallback t-shirt');
-                alert('Error: Could not create t-shirt. Please refresh the page.');
-            };
-            fallbackImg.src = fallbackCanvas.toDataURL();
+            
+            tryNextPath();
         }
         
         // Load the image
@@ -494,11 +443,6 @@
         }
         
         function redrawCanvas() {
-            if (!tshirtImg) {
-                console.log('T-shirt image not ready yet, waiting...');
-                return;
-            }
-            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Draw t-shirt with color using the same technique as the original code
@@ -526,11 +470,6 @@
         }
         
         function drawTshirtWithColor() {
-            if (!tshirtImg) {
-                console.log('T-shirt image not ready for drawing');
-                return;
-            }
-            
             // First draw the original t-shirt
             ctx.drawImage(tshirtImg, 0, 0, canvas.width, canvas.height);
 
@@ -743,11 +682,6 @@
         }
         
         function drawTshirtWithColorOnCanvas(targetCtx) {
-            if (!tshirtImg) {
-                console.log('T-shirt image not ready for saving');
-                return;
-            }
-            
             // First draw the original t-shirt
             targetCtx.drawImage(tshirtImg, 0, 0, canvas.width, canvas.height);
 
