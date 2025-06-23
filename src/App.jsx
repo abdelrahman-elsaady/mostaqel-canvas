@@ -217,7 +217,7 @@ function App() {
             <h3>Selected Design</h3>
             <div className="slider-container">
               <label>Size: {Math.round(selectedDesign.scale * 100)}%</label>
-              <input type="range" min="10" max="200" value={selectedDesign.scale * 100}
+              <input type="range" min="0" max="200" value={selectedDesign.scale * 100}
                      onChange={(e) => updateSelectedDesign('scale', e.target.value / 100)} />
             </div>
             <div className="slider-container">
