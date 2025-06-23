@@ -247,7 +247,7 @@
             </div>
             
             <div class="control-group">
-                <h3>Save Optionss</h3>
+                <h3>Save Options</h3>
                 <!-- <div style="margin-bottom: 10px;">
                     <label>
                         <input type="checkbox" id="transparent-bg" checked> 
@@ -273,7 +273,7 @@
         };
         
         tshirtImg.onload = function() {
-            console.log('T-shirt image loaded successfully');
+            console.log('T-shirt image loaded successfullyy');
             redrawCanvas();
         };
         
@@ -295,8 +295,8 @@
                     tshirtImg.src = imagePaths[currentPathIndex];
                     currentPathIndex++;
                 } else {
-                    console.error('All image paths failed');
-                    alert('Error: Could not load t-shirt image from any location. Please ensure t-shirt.png is in the project folder.');
+                    console.log('All image paths failed, using fallback t-shirt shape');
+                    createFallbackTshirt();
                 }
             }
             
@@ -311,6 +311,47 @@
             };
             
             tryNextPath();
+        }
+        
+        // Create a fallback t-shirt shape when image fails to load
+        function createFallbackTshirt() {
+            // Create a canvas to draw a simple t-shirt shape
+            const fallbackCanvas = document.createElement('canvas');
+            fallbackCanvas.width = 400;
+            fallbackCanvas.height = 400;
+            const fallbackCtx = fallbackCanvas.getContext('2d');
+            
+            // Draw a simple t-shirt shape
+            fallbackCtx.fillStyle = 'white';
+            fallbackCtx.fillRect(0, 0, 400, 400);
+            
+            // Draw t-shirt outline
+            fallbackCtx.strokeStyle = '#333';
+            fallbackCtx.lineWidth = 2;
+            
+            // T-shirt body
+            fallbackCtx.beginPath();
+            fallbackCtx.rect(100, 150, 200, 200);
+            fallbackCtx.stroke();
+            
+            // T-shirt sleeves
+            fallbackCtx.beginPath();
+            fallbackCtx.rect(50, 180, 50, 80);
+            fallbackCtx.rect(300, 180, 50, 80);
+            fallbackCtx.stroke();
+            
+            // Neck
+            fallbackCtx.beginPath();
+            fallbackCtx.arc(200, 170, 20, 0, 2 * Math.PI);
+            fallbackCtx.stroke();
+            
+            // Convert to image
+            const fallbackImg = new Image();
+            fallbackImg.onload = function() {
+                tshirtImg = fallbackImg;
+                redrawCanvas();
+            };
+            fallbackImg.src = fallbackCanvas.toDataURL();
         }
         
         // Load the image
