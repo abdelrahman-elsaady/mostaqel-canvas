@@ -264,27 +264,28 @@
     <script>
         const canvas = document.getElementById('design-canvas');
         const ctx = canvas.getContext('2d');
-        const tshirtImg = new Image();
+        let tshirtImg = null;
         
         // Handle image loading errors
-        tshirtImg.onerror = function() {
+        function handleImageError() {
             console.error('Failed to load t-shirt image');
-            alert('Error: Could not load t-shirt image. Please check if t-shirt.png exists in the same folder.');
-        };
+            console.log('Creating fallback t-shirt shape...');
+            createFallbackTshirt();
+        }
         
-        tshirtImg.onload = function() {
-            console.log('T-shirt image loaded successfullyy');
+        function handleImageLoad() {
+            console.log('T-shirt image loaded successfully');
             redrawCanvas();
-        };
+        }
         
         // Try multiple paths for the image
         function loadTshirtImage() {
             const imagePaths = [
-                './t-shirt.png',
-                '/t-shirt.png',
-                't-shirt.png',
-                './images/t-shirt.png',
-                '/images/t-shirt.png'
+                './tshirt.png',
+                '/tshirt.png',
+                'tshirt.png',
+                './images/tshirt.png',
+                '/images/tshirt.png'
             ];
             
             let currentPathIndex = 0;
@@ -292,34 +293,38 @@
             function tryNextPath() {
                 if (currentPathIndex < imagePaths.length) {
                     console.log('Trying to load image from:', imagePaths[currentPathIndex]);
-                    tshirtImg.src = imagePaths[currentPathIndex];
-                    currentPathIndex++;
+                    const img = new Image();
+                    img.onerror = function() {
+                        console.log('Failed to load from:', imagePaths[currentPathIndex]);
+                        currentPathIndex++;
+                        tryNextPath();
+                    };
+                    img.onload = function() {
+                        console.log('T-shirt image loaded successfully from:', imagePaths[currentPathIndex]);
+                        tshirtImg = img;
+                        redrawCanvas();
+                    };
+                    img.src = imagePaths[currentPathIndex];
                 } else {
                     console.log('All image paths failed, using fallback t-shirt shape');
                     createFallbackTshirt();
                 }
             }
             
-            tshirtImg.onerror = function() {
-                console.log('Failed to load from:', tshirtImg.src);
-                tryNextPath();
-            };
-            
-            tshirtImg.onload = function() {
-                console.log('T-shirt image loaded successfully from:', tshirtImg.src);
-                redrawCanvas();
-            };
-            
             tryNextPath();
         }
         
         // Create a fallback t-shirt shape when image fails to load
         function createFallbackTshirt() {
+            console.log('Creating fallback t-shirt...');
             // Create a canvas to draw a simple t-shirt shape
             const fallbackCanvas = document.createElement('canvas');
             fallbackCanvas.width = 400;
             fallbackCanvas.height = 400;
             const fallbackCtx = fallbackCanvas.getContext('2d');
+            
+            // Clear canvas
+            fallbackCtx.clearRect(0, 0, 400, 400);
             
             // Draw a simple t-shirt shape
             fallbackCtx.fillStyle = 'white';
@@ -348,8 +353,13 @@
             // Convert to image
             const fallbackImg = new Image();
             fallbackImg.onload = function() {
+                console.log('Fallback t-shirt created successfully');
                 tshirtImg = fallbackImg;
                 redrawCanvas();
+            };
+            fallbackImg.onerror = function() {
+                console.error('Failed to create fallback t-shirt');
+                alert('Error: Could not create t-shirt. Please refresh the page.');
             };
             fallbackImg.src = fallbackCanvas.toDataURL();
         }
@@ -484,6 +494,11 @@
         }
         
         function redrawCanvas() {
+            if (!tshirtImg) {
+                console.log('T-shirt image not ready yet, waiting...');
+                return;
+            }
+            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Draw t-shirt with color using the same technique as the original code
@@ -511,6 +526,11 @@
         }
         
         function drawTshirtWithColor() {
+            if (!tshirtImg) {
+                console.log('T-shirt image not ready for drawing');
+                return;
+            }
+            
             // First draw the original t-shirt
             ctx.drawImage(tshirtImg, 0, 0, canvas.width, canvas.height);
 
@@ -723,6 +743,11 @@
         }
         
         function drawTshirtWithColorOnCanvas(targetCtx) {
+            if (!tshirtImg) {
+                console.log('T-shirt image not ready for saving');
+                return;
+            }
+            
             // First draw the original t-shirt
             targetCtx.drawImage(tshirtImg, 0, 0, canvas.width, canvas.height);
 
