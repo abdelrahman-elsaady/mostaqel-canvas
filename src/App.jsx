@@ -13,6 +13,8 @@ function App() {
   const [isPinching, setIsPinching] = useState(false)
   const pinchStartDist = useRef(0)
   const pinchStartScale = useRef(1)
+  const pinchStartAngle = useRef(0)
+  const pinchStartRotation = useRef(0)
 
   // Load the t-shirt image once
   useEffect(() => {
@@ -197,6 +199,12 @@ function App() {
     return Math.sqrt(dx * dx + dy * dy)
   }
 
+  const getTouchesAngle = (touch1, touch2) => {
+    const dx = touch2.clientX - touch1.clientX
+    const dy = touch2.clientY - touch1.clientY
+    return Math.atan2(dy, dx)
+  }
+
   const handleTouchStart = (e) => {
     if (e.touches.length === 1) {
       const { x, y } = getTouchPos(e.touches[0])
@@ -214,6 +222,8 @@ function App() {
       setIsPinching(true)
       pinchStartDist.current = getTouchesDistance(e.touches[0], e.touches[1])
       pinchStartScale.current = selectedDesign.scale
+      pinchStartAngle.current = getTouchesAngle(e.touches[0], e.touches[1])
+      pinchStartRotation.current = selectedDesign.rotation
     }
   }
 
@@ -221,8 +231,11 @@ function App() {
     if (isPinching && e.touches.length === 2 && selectedDesign) {
       const newDist = getTouchesDistance(e.touches[0], e.touches[1])
       let newScale = pinchStartScale.current * (newDist / pinchStartDist.current)
-      newScale = Math.max(0.1, Math.min(newScale, 2)) // Clamp scale between 0.1 and 2
+      newScale = Math.max(0.01, Math.min(newScale, 2)) // Clamp scale between 0.01 and 2
+      const newAngle = getTouchesAngle(e.touches[0], e.touches[1])
+      let newRotation = pinchStartRotation.current + (newAngle - pinchStartAngle.current)
       updateSelectedDesign('scale', newScale)
+      updateSelectedDesign('rotation', newRotation)
       e.preventDefault()
       return
     }
