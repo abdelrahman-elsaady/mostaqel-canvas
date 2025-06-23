@@ -265,18 +265,62 @@
         const canvas = document.getElementById('design-canvas');
         const ctx = canvas.getContext('2d');
         const tshirtImg = new Image();
-        tshirtImg.src = 't-shirt.png';
+        
+        // Handle image loading errors
+        tshirtImg.onerror = function() {
+            console.error('Failed to load t-shirt image');
+            alert('Error: Could not load t-shirt image. Please check if t-shirt.png exists in the same folder.');
+        };
+        
+        tshirtImg.onload = function() {
+            console.log('T-shirt image loaded successfully');
+            redrawCanvas();
+        };
+        
+        // Try multiple paths for the image
+        function loadTshirtImage() {
+            const imagePaths = [
+                './t-shirt.png',
+                '/t-shirt.png',
+                't-shirt.png',
+                './images/t-shirt.png',
+                '/images/t-shirt.png'
+            ];
+            
+            let currentPathIndex = 0;
+            
+            function tryNextPath() {
+                if (currentPathIndex < imagePaths.length) {
+                    console.log('Trying to load image from:', imagePaths[currentPathIndex]);
+                    tshirtImg.src = imagePaths[currentPathIndex];
+                    currentPathIndex++;
+                } else {
+                    console.error('All image paths failed');
+                    alert('Error: Could not load t-shirt image from any location. Please ensure t-shirt.png is in the project folder.');
+                }
+            }
+            
+            tshirtImg.onerror = function() {
+                console.log('Failed to load from:', tshirtImg.src);
+                tryNextPath();
+            };
+            
+            tshirtImg.onload = function() {
+                console.log('T-shirt image loaded successfully from:', tshirtImg.src);
+                redrawCanvas();
+            };
+            
+            tryNextPath();
+        }
+        
+        // Load the image
+        loadTshirtImage();
         
         let designs = [];
         let selectedDesign = null;
         let isDragging = false;
         let dragOffset = { x: 0, y: 0 };
         let currentTshirtColor = 'white';
-        
-        // Initialize
-        tshirtImg.onload = function() {
-            redrawCanvas();
-        };
         
         // Set up canvas for better image quality
         function setupCanvasQuality() {

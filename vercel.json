@@ -2,18 +2,30 @@
   "version": 2,
   "builds": [
     {
-      "src": "./index.js",
-      "use": "@vercel/node"
+      "src": "index.html",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/socket.io/(.*)",
-      "dest": "/index.js"
+      "src": "/",
+      "dest": "/index.html"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.js"
+      "dest": "/$1"
+    }
+  ],
+  "functions": {},
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     }
   ]
 }
