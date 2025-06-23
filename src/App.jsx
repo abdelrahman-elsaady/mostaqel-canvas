@@ -234,8 +234,9 @@ function App() {
       newScale = Math.max(0.01, Math.min(newScale, 2)) // Clamp scale between 0.01 and 2
       const newAngle = getTouchesAngle(e.touches[0], e.touches[1])
       let newRotation = pinchStartRotation.current + (newAngle - pinchStartAngle.current)
-      updateSelectedDesign('scale', newScale)
-      updateSelectedDesign('rotation', newRotation)
+      setDesigns(designs => designs.map(d =>
+        d.id === selectedDesignId ? { ...d, scale: newScale, rotation: newRotation } : d
+      ))
       e.preventDefault()
       return
     }
