@@ -148,6 +148,7 @@ function App() {
     return null
   }
 
+  // Mouse events
   const handleMouseDown = (e) => {
     const rect = canvasRef.current.getBoundingClientRect()
     const x = (e.clientX - rect.left)
@@ -178,16 +179,62 @@ function App() {
     setIsDragging(false)
   }
 
+  // Touch events
+  const getTouchPos = (touch) => {
+    const rect = canvasRef.current.getBoundingClientRect()
+    return {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    }
+  }
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length !== 1) return
+    const { x, y } = getTouchPos(e.touches[0])
+    const d = getDesignAtCoords(x, y)
+    if (d) {
+      setSelectedDesignId(d.id)
+      setIsDragging(true)
+      dragOffset.current = { x: x - d.x, y: y - d.y }
+    } else {
+      setSelectedDesignId(null)
+    }
+  }
+
+  const handleTouchMove = (e) => {
+    if (!isDragging || !selectedDesign) return
+    if (e.touches.length !== 1) return
+    const { x, y } = getTouchPos(e.touches[0])
+    const newX = x - dragOffset.current.x
+    const newY = y - dragOffset.current.y
+    setDesigns(designs => designs.map(d =>
+      d.id === selectedDesignId ? { ...d, x: newX, y: newY } : d
+    ))
+    e.preventDefault() // Prevent scrolling while dragging
+  }
+
+  const handleTouchEnd = () => {
+    setIsDragging(false)
+  }
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+    // Mouse events
     canvas.addEventListener('mousedown', handleMouseDown)
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('mouseup', handleMouseUp)
+    // Touch events
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('touchend', handleTouchEnd)
     return () => {
       canvas.removeEventListener('mousedown', handleMouseDown)
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
+      canvas.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleTouchEnd)
     }
     // eslint-disable-next-line
   }, [designs, selectedDesign, isDragging])
