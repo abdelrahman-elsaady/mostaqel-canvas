@@ -1,0 +1,4 @@
+/* Hide Next.js dev indicator */
+.nextjs-toast, [data-nextjs-toast] {
+  display: none !important;
+}
