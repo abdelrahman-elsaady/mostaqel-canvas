@@ -5,14 +5,18 @@ import { FaSearchPlus, FaSearchMinus, FaCamera, FaDownload, FaMousePointer, FaHa
 import { IoCameraReverseOutline } from "react-icons/io5";
 import { TbJacket } from "react-icons/tb";
 import { PiPantsLight, PiHoodieThin, PiTShirtLight } from "react-icons/pi";
+import html2canvas from 'html2canvas';
+import { GiPoloShirt } from "react-icons/gi";
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
+import { CiImageOn } from "react-icons/ci";
+import { Formik, Form, Field, ErrorMessage } from 'formik';
 
 function App() {
-  const canvasRef = useRef(null)
   const fileInputRef = useRef(null)
   const [designs, setDesigns] = useState([])
   const [selectedDesignId, setSelectedDesignId] = useState(null)
-  const [tshirtColor, setTshirtColor] = useState('#ffffff') // Default to white
-  const tshirtImgRef = useRef(null)
+  const [selectedColor, setSelectedColor] = useState('white') // Default to white
   const [isDragging, setIsDragging] = useState(false)
   const dragOffset = useRef({ x: 0, y: 0 })
   const [isPinching, setIsPinching] = useState(false)
@@ -24,92 +28,114 @@ function App() {
   const [selectedSize, setSelectedSize] = useState('M');
   const [showAdBanner, setShowAdBanner] = useState(true);
   const [handleDrag, setHandleDrag] = useState(null); // 'resize' or 'rotate' or null
-  const handleRef = useRef(null);
-  const rotateHandleRef = useRef(null);
+  // Front/back toggle
+  const [isFront, setIsFront] = useState(true);
 
-  // Load the t-shirt image once
+  // Order form state
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderStatus, setOrderStatus] = useState(null); // 'sending', 'success', 'error'
+
+  // Color options and mapping
+  const colorOptions = [
+    { name: 'white', hex: '#ffffff' },
+    { name: 'black', hex: '#000000' },
+    { name: 'blue', hex: '#0080ff' },
+    { name: 'red', hex: '#ff0000' },
+    { name: 'Baby green blue', hex: '#00bcd4' },
+    { name: 'mustard', hex: '#ffc107' },
+    { name: 'purple', hex: '#a259d9' },
+  ];
+  // For pants, no white
+  const pantsColors = colorOptions.filter(c => c.name !== 'white');
+
+  // Add this at the top of the App function, after useState declarations
+  const [lastOrderForm, setLastOrderForm] = useState({ name: '', phone: '', address: '', email: '' });
+
+  // Load from localStorage on mount
   useEffect(() => {
-    const img = new Image()
-    img.crossOrigin = "Anonymous"
-    img.onload = () => {
-      tshirtImgRef.current = img
-      redrawCanvas()
+    const saved = localStorage.getItem('tshirtEditorSave');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.selectedCloth) setSelectedCloth(data.selectedCloth);
+        if (data.selectedColor) setSelectedColor(data.selectedColor);
+        if (data.selectedSize) setSelectedSize(data.selectedSize);
+        if (typeof data.isFront === 'boolean') setIsFront(data.isFront);
+        if (Array.isArray(data.designs)) setDesigns(data.designs);
+        if (data.lastOrderForm) setLastOrderForm(data.lastOrderForm);
+      } catch {}
     }
-    img.onerror = () => {
-      console.error("Failed to load t-shirt image from /tshirt.png")
-      alert("Error: Could not load t-shirt image. Make sure it is in the `public` folder.")
+  }, []);
+
+  // Save handler
+  const handleSave = () => {
+    const saveData = {
+      selectedCloth,
+      selectedColor,
+      selectedSize,
+      isFront,
+      designs,
+      lastOrderForm,
+    };
+    localStorage.setItem('tshirtEditorSave', JSON.stringify(saveData));
+    Swal.fire({
+      icon: 'success',
+      title: 'تم الحفظ',
+      text: 'تم حفظ التصميم والبيانات بنجاح!'
+    });
+  };
+
+  // --- Static image src logic ---
+  function getClothImageSrc() {
+    if (selectedCloth === 'tshirt') {
+      const side = isFront ? 'front' : 'Back';
+      return `/T-shirt/${side}/${selectedColor}.png`;
+    } else if (selectedCloth === 'hoodie') {
+      const side = isFront ? 'front' : 'Back';
+      return `/Hoodie/${side}/${selectedColor}.png`;
+    } else if (selectedCloth === 'sweatshirt') {
+      return `/Sweatshirt/${selectedColor}.png`;
+    } else if (selectedCloth === 'pants') {
+      return `/pants/${selectedColor}.png`;
+    } else if (selectedCloth === 'polo') {
+      // Placeholder: use hoodie front as fallback
+      return `/polo/${selectedColor}.png`;
     }
-    img.src = '/tshirt.png'
-  }, [])
-
-  // Redraw canvas whenever designs or color change
-  useEffect(() => {
-    redrawCanvas()
-  }, [designs, tshirtColor, selectedDesignId])
-
-  const redrawCanvas = () => {
-    const canvas = canvasRef.current
-    if (!canvas || !tshirtImgRef.current) return
-    const ctx = canvas.getContext('2d')
-
-    // Set canvas size for high DPI
-    const dpr = window.devicePixelRatio || 1
-    const rect = canvas.getBoundingClientRect()
-    canvas.width = rect.width * dpr
-    canvas.height = rect.height * dpr
-    ctx.scale(dpr, dpr)
-
-    // Clear and draw
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // --- Draw T-shirt with Color ---
-    ctx.drawImage(tshirtImgRef.current, 0, 0, canvas.clientWidth, canvas.clientHeight)
-    ctx.globalCompositeOperation = 'multiply'
-    ctx.fillStyle = tshirtColor
-    ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight)
-    ctx.globalCompositeOperation = 'destination-in'
-    ctx.drawImage(tshirtImgRef.current, 0, 0, canvas.clientWidth, canvas.clientHeight)
-    ctx.globalCompositeOperation = 'source-over' // Reset
-
-    // --- Draw Designs ---
-    designs.forEach(design => {
-      ctx.save()
-      ctx.translate(design.x, design.y)
-      ctx.rotate(design.rotation)
-      ctx.scale(design.scale, design.scale)
-      ctx.drawImage(design.img, -design.img.width / 2, -design.img.height / 2)
-      ctx.restore()
-
-      if (design.id === selectedDesignId) {
-        // Draw selection border
-        ctx.save()
-        ctx.strokeStyle = '#007bff'
-        ctx.lineWidth = 2
-        ctx.strokeRect(
-          design.x - (design.img.width / 2) * design.scale,
-          design.y - (design.img.height / 2) * design.scale,
-          design.img.width * design.scale,
-          design.img.height * design.scale
-        )
-        ctx.restore()
-      }
-    })
+    return '';
   }
 
+  // --- Design overlay logic ---
+  // Each design has: id, img (Image object), x, y, scale, rotation
+  // We'll use absolute positioning over the clothing image
+  const designAreaRef = useRef(null);
+  const [designAreaSize, setDesignAreaSize] = useState({ width: 600, height: 600 });
+  useEffect(() => {
+    if (designAreaRef.current) {
+      setDesignAreaSize({
+        width: designAreaRef.current.offsetWidth,
+        height: designAreaRef.current.offsetHeight,
+      });
+    }
+  }, [selectedCloth, selectedColor, isFront]);
+
+  // --- File upload logic ---
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
       const reader = new FileReader()
       reader.onload = (event) => {
-        const img = new Image()
+        const img = new window.Image()
         img.onload = () => {
           const newDesign = {
             id: Date.now(),
             img: img,
-            x: 300,
-            y: 300,
-            scale: 0.2, // Smaller default size
+            x: designAreaSize.width / 2,
+            y: designAreaSize.height / 2,
+            scale: 0.2,
             rotation: 0,
+            width: img.width,
+            height: img.height,
+            src: event.target.result,
           }
           setDesigns(prev => [...prev, newDesign])
           setSelectedDesignId(newDesign.id)
@@ -123,7 +149,7 @@ function App() {
   const selectedDesign = designs.find(d => d.id === selectedDesignId)
 
   const updateSelectedDesign = (prop, value) => {
-    setDesigns(designs.map(d => 
+    setDesigns(designs.map(d =>
       d.id === selectedDesignId ? { ...d, [prop]: value } : d
     ))
   }
@@ -132,184 +158,144 @@ function App() {
     setDesigns(designs.filter(d => d.id !== selectedDesignId))
     setSelectedDesignId(null)
   }
-  
-  const saveDesign = () => {
-    const canvas = canvasRef.current
-    const link = document.createElement('a')
-    link.download = 'tshirt-design.png'
-    link.href = canvas.toDataURL('image/png')
-    link.click()
-  }
 
-  // --- Drag and Drop Logic ---
+  // --- Drag/Resize/Rotate logic (mouse/touch) ---
+  // Helper: get design at coordinates
   const getDesignAtCoords = (x, y) => {
-    // Return the topmost design under the mouse
     for (let i = designs.length - 1; i >= 0; i--) {
-      const d = designs[i]
-      const dx = x - d.x
-      const dy = y - d.y
-      const w = d.img.width * d.scale
-      const h = d.img.height * d.scale
+      const d = designs[i];
+      const dx = x - d.x;
+      const dy = y - d.y;
+      const w = d.width * d.scale;
+      const h = d.height * d.scale;
       // Undo rotation for hit test
-      const angle = -d.rotation
-      const rx = dx * Math.cos(angle) - dy * Math.sin(angle)
-      const ry = dx * Math.sin(angle) + dy * Math.cos(angle)
+      const angle = -d.rotation;
+      const rx = dx * Math.cos(angle) - dy * Math.sin(angle);
+      const ry = dx * Math.sin(angle) + dy * Math.cos(angle);
       if (
         rx >= -w / 2 && rx <= w / 2 &&
         ry >= -h / 2 && ry <= h / 2
       ) {
-        return d
+        return d;
       }
     }
-    return null
-  }
+    return null;
+  };
 
-  // Mouse events
+  // Mouse events for drag
   const handleMouseDown = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect()
-    const x = (e.clientX - rect.left)
-    const y = (e.clientY - rect.top)
-    const d = getDesignAtCoords(x, y)
+    if (e.button !== 0) return;
+    const rect = designAreaRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const d = getDesignAtCoords(x, y);
     if (d) {
-      setSelectedDesignId(d.id)
-      setIsDragging(true)
-      dragOffset.current = { x: x - d.x, y: y - d.y }
+      setSelectedDesignId(d.id);
+      setIsDragging(true);
+      dragOffset.current = { x: x - d.x, y: y - d.y };
     } else {
-      setSelectedDesignId(null)
+      setSelectedDesignId(null);
     }
-  }
-
+  };
   const handleMouseMove = (e) => {
-    if (!isDragging || !selectedDesign) return
-    const rect = canvasRef.current.getBoundingClientRect()
-    const x = (e.clientX - rect.left)
-    const y = (e.clientY - rect.top)
-    const newX = x - dragOffset.current.x
-    const newY = y - dragOffset.current.y
+    if (!isDragging || !selectedDesign) return;
+    const rect = designAreaRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const newX = x - dragOffset.current.x;
+    const newY = y - dragOffset.current.y;
     setDesigns(designs => designs.map(d =>
       d.id === selectedDesignId ? { ...d, x: newX, y: newY } : d
-    ))
-  }
+    ));
+  };
+  const handleMouseUp = () => setIsDragging(false);
 
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
-
-  // Touch events
+  // Touch events for drag
   const getTouchPos = (touch) => {
-    const rect = canvasRef.current.getBoundingClientRect()
+    const rect = designAreaRef.current.getBoundingClientRect();
     return {
       x: touch.clientX - rect.left,
       y: touch.clientY - rect.top
-    }
-  }
-
-  const getTouchesDistance = (touch1, touch2) => {
-    const dx = touch2.clientX - touch1.clientX
-    const dy = touch2.clientY - touch1.clientY
-    return Math.sqrt(dx * dx + dy * dy)
-  }
-
-  const getTouchesAngle = (touch1, touch2) => {
-    const dx = touch2.clientX - touch1.clientX
-    const dy = touch2.clientY - touch1.clientY
-    return Math.atan2(dy, dx)
-  }
-
+    };
+  };
   const handleTouchStart = (e) => {
     if (e.touches.length === 1) {
-      const { x, y } = getTouchPos(e.touches[0])
-      const d = getDesignAtCoords(x, y)
+      const { x, y } = getTouchPos(e.touches[0]);
+      const d = getDesignAtCoords(x, y);
       if (d) {
-        setSelectedDesignId(d.id)
-        setIsDragging(true)
-        dragOffset.current = { x: x - d.x, y: y - d.y }
+        setSelectedDesignId(d.id);
+        setIsDragging(true);
+        dragOffset.current = { x: x - d.x, y: y - d.y };
       } else {
-        setSelectedDesignId(null)
+        setSelectedDesignId(null);
       }
-      setIsPinching(false)
+      setIsPinching(false);
     } else if (e.touches.length === 2 && selectedDesign) {
-      setIsDragging(false)
-      setIsPinching(true)
-      pinchStartDist.current = getTouchesDistance(e.touches[0], e.touches[1])
-      pinchStartScale.current = selectedDesign.scale
-      pinchStartAngle.current = getTouchesAngle(e.touches[0], e.touches[1])
-      pinchStartRotation.current = selectedDesign.rotation
+      setIsDragging(false);
+      setIsPinching(true);
+      pinchStartDist.current = getTouchesDistance(e.touches[0], e.touches[1]);
+      pinchStartScale.current = selectedDesign.scale;
+      pinchStartAngle.current = getTouchesAngle(e.touches[0], e.touches[1]);
+      pinchStartRotation.current = selectedDesign.rotation;
     }
-  }
-
+  };
+  const getTouchesDistance = (touch1, touch2) => {
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+  const getTouchesAngle = (touch1, touch2) => {
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    return Math.atan2(dy, dx);
+  };
   const handleTouchMove = (e) => {
     if (isPinching && e.touches.length === 2 && selectedDesign) {
-      const newDist = getTouchesDistance(e.touches[0], e.touches[1])
-      let newScale = pinchStartScale.current * (newDist / pinchStartDist.current)
-      newScale = Math.max(0.01, Math.min(newScale, 2)) // Clamp scale between 0.01 and 2
-      const newAngle = getTouchesAngle(e.touches[0], e.touches[1])
-      let newRotation = pinchStartRotation.current + (newAngle - pinchStartAngle.current)
+      const newDist = getTouchesDistance(e.touches[0], e.touches[1]);
+      let newScale = pinchStartScale.current * (newDist / pinchStartDist.current);
+      newScale = Math.max(0.01, Math.min(newScale, 2));
+      const newAngle = getTouchesAngle(e.touches[0], e.touches[1]);
+      let newRotation = pinchStartRotation.current + (newAngle - pinchStartAngle.current);
       setDesigns(designs => designs.map(d =>
         d.id === selectedDesignId ? { ...d, scale: newScale, rotation: newRotation } : d
-      ))
-      e.preventDefault()
-      return
+      ));
+      e.preventDefault();
+      return;
     }
-    if (!isDragging || !selectedDesign || e.touches.length !== 1) return
-    const { x, y } = getTouchPos(e.touches[0])
-    const newX = x - dragOffset.current.x
-    const newY = y - dragOffset.current.y
+    if (!isDragging || !selectedDesign || e.touches.length !== 1) return;
+    const { x, y } = getTouchPos(e.touches[0]);
+    const newX = x - dragOffset.current.x;
+    const newY = y - dragOffset.current.y;
     setDesigns(designs => designs.map(d =>
       d.id === selectedDesignId ? { ...d, x: newX, y: newY } : d
-    ))
-    e.preventDefault()
-  }
+    ));
+    e.preventDefault();
+  };
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setIsPinching(false);
+  };
 
-  const handleTouchEnd = (e) => {
-    setIsDragging(false)
-    setIsPinching(false)
-  }
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    // Mouse events
-    canvas.addEventListener('mousedown', handleMouseDown)
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-    // Touch events
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
-    window.addEventListener('touchmove', handleTouchMove, { passive: false })
-    window.addEventListener('touchend', handleTouchEnd)
-    return () => {
-      canvas.removeEventListener('mousedown', handleMouseDown)
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-      canvas.removeEventListener('touchstart', handleTouchStart)
-      window.removeEventListener('touchmove', handleTouchMove)
-      window.removeEventListener('touchend', handleTouchEnd)
-    }
-    // eslint-disable-next-line
-  }, [designs, selectedDesign, isDragging, isPinching])
-
-  // Helper to get selected design's screen position and size
+  // Helper to get selected design's screen position and size (relative to designAreaRef)
   const getSelectedDesignRect = () => {
-    if (!selectedDesign || !canvasRef.current) return null;
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
+    if (!selectedDesign || !designAreaRef.current) return null;
     const d = selectedDesign;
-    const w = d.img.width * d.scale;
-    const h = d.img.height * d.scale;
-    // Center of design in canvas coordinates
+    const w = d.width * d.scale;
+    const h = d.height * d.scale;
+    // Center of design in design area coordinates
     const cx = d.x;
     const cy = d.y;
     // Top-left corner
-    const left = rect.left + cx - w / 2;
-    const top = rect.top + cy - h / 2;
+    const left = cx - w / 2;
+    const top = cy - h / 2;
     return {
       left,
       top,
       width: w,
       height: h,
       rotation: d.rotation,
-      centerX: rect.left + cx,
-      centerY: rect.top + cy,
+      centerX: cx,
+      centerY: cy,
     };
   };
 
@@ -317,32 +303,32 @@ function App() {
   useEffect(() => {
     if (!handleDrag) return;
     const onMove = (e) => {
-      if (!selectedDesign) return;
-      const rect = canvasRef.current.getBoundingClientRect();
+      if (!selectedDesign || !designAreaRef.current) return;
+      const rect = designAreaRef.current.getBoundingClientRect();
       let clientX, clientY;
       if (e.touches) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
+        clientX = e.touches[0].clientX - rect.left;
+        clientY = e.touches[0].clientY - rect.top;
       } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
+        clientX = e.clientX - rect.left;
+        clientY = e.clientY - rect.top;
       }
       const d = selectedDesign;
       const cx = d.x;
       const cy = d.y;
       if (handleDrag === 'resize') {
         // Calculate new scale based on drag distance from center
-        const dx = clientX - (rect.left + cx);
-        const dy = clientY - (rect.top + cy);
+        const dx = clientX - cx;
+        const dy = clientY - cy;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const base = Math.max(d.img.width, d.img.height) / 2;
+        const base = Math.max(d.width, d.height) / 2;
         let newScale = dist / base;
         newScale = Math.max(0.01, Math.min(newScale, 2)); // Allow very small images
         updateSelectedDesign('scale', newScale);
       } else if (handleDrag === 'rotate') {
         // Calculate new rotation based on angle from center
-        const dx = clientX - (rect.left + cx);
-        const dy = clientY - (rect.top + cy);
+        const dx = clientX - cx;
+        const dy = clientY - cy;
         let newAngle = Math.atan2(dy, dx);
         updateSelectedDesign('rotation', newAngle);
       }
@@ -360,28 +346,242 @@ function App() {
     };
   }, [handleDrag, selectedDesign]);
 
+  // Move logic for dragging the design itself
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMove = (e) => {
+      if (!selectedDesign || !designAreaRef.current) return;
+      const rect = designAreaRef.current.getBoundingClientRect();
+      let clientX, clientY;
+      if (e.touches) {
+        clientX = e.touches[0].clientX - rect.left;
+        clientY = e.touches[0].clientY - rect.top;
+      } else {
+        clientX = e.clientX - rect.left;
+        clientY = e.clientY - rect.top;
+      }
+      const newX = clientX - dragOffset.current.x;
+      const newY = clientY - dragOffset.current.y;
+      setDesigns(designs => designs.map(d =>
+        d.id === selectedDesignId ? { ...d, x: newX, y: newY } : d
+      ));
+    };
+    const onUp = () => setIsDragging(false);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchend', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchend', onUp);
+    };
+  }, [isDragging, selectedDesign, selectedDesignId]);
+
   const designRect = getSelectedDesignRect();
 
+  // --- Download composed image ---
+  const [isExporting, setIsExporting] = useState(false);
+
+  const saveDesign = async () => {
+    setIsExporting(true);
+    await new Promise(r => setTimeout(r, 50)); // Allow UI to update
+    if (!designAreaRef.current) return;
+    const canvas = await html2canvas(designAreaRef.current, {backgroundColor: null, useCORS: true});
+    const link = document.createElement('a');
+    link.download = 'tshirt-design.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    setIsExporting(false);
+  };
+
+  // --- Render ---
   return (
-    <div className="main-app-container">
+    <div className="main-app-container container-fluid">
+      {/* Order Modal */}
+      {showOrderModal && (
+        <div className="modal-backdrop" onClick={() => setShowOrderModal(false)}>
+          <div className="order-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setShowOrderModal(false)}><FaTimes /></button>
+            <h2 className="modal-title"> شراء</h2>
+            <Formik
+              initialValues={{ name: '', email: '', phone: '', address: '' }}
+              validate={values => {
+                const errors = {};
+                if (!values.name) errors.name = 'مطلوب';
+                if (!values.phone) errors.phone = 'مطلوب';
+                if (!values.address) errors.address = 'مطلوب';
+                // Email is optional, but if present, must be valid
+                if (values.email && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)) {
+                  errors.email = 'بريد إلكتروني غير صالح';
+                }
+                return errors;
+              }}
+              onSubmit={async (values, { setSubmitting, resetForm }) => {
+                Swal.fire({
+                  title: 'يرجى الانتظار... جارٍ إرسال الطلب',
+                  allowOutsideClick: false,
+                  showConfirmButton: false,
+                  html: `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                    <img src="/logo.png" alt="logo" style="width:64px;height:64px;animation:swal-spin 1.2s linear infinite;" />
+                  </div>`,
+                  didOpen: () => {},
+                  customClass: { popup: 'swal2-loader-popup' },
+                });
+                setOrderStatus('sending');
+                setIsExporting(true);
+                await new Promise(r => setTimeout(r, 50));
+                let designImage = null;
+                if (designAreaRef.current) {
+                  const canvas = await html2canvas(designAreaRef.current, {backgroundColor: null, useCORS: true});
+                  designImage = canvas.toDataURL('image/png');
+                }
+                setIsExporting(false);
+                const uploadedDesign = designs.length > 0 ? designs[0].src : null;
+                try {
+                  const res = await fetch('/api/email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      to: 'alysayed208@gmail.com',
+                      subject: `طلب جديد - ${values.name}`,
+                      text: `\nطلب جديد من العميل:\nالاسم: ${values.name}\nالبريد الإلكتروني: ${values.email}\nرقم الهاتف: ${values.phone}\nالعنوان: ${values.address}\nالمقاس: ${selectedSize}\nاللون: ${selectedColor}\nنوع القماش: ${selectedCloth}`,
+                      html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                          <h2 style="color: #2a6cff;">طلب جديد من العميل</h2>
+                          <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                            <h3 style="color: #333; margin-top: 0;">تفاصيل العميل:</h3>
+                            <p><strong>الاسم:</strong> ${values.name}</p>
+                            <p><strong>البريد الإلكتروني:</strong> ${values.email}</p>
+                            <p><strong>رقم الهاتف:</strong> ${values.phone}</p>
+                            <p><strong>العنوان:</strong> ${values.address}</p>
+                          </div>
+                          <div style="background: #e6f0ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                            <h3 style="color: #333; margin-top: 0;">تفاصيل الطلب:</h3>
+                            <p><strong>المقاس:</strong> ${selectedSize}</p>
+                            <p><strong>اللون:</strong> <span style=" padding: 5px 10px; border-radius: 5px; ">${selectedColor}</span></p>
+                            <p><strong>نوع القماش:</strong> ${selectedCloth}</p>
+                          </div>
+                          <div style="text-align: center; margin: 20px 0;">
+                            <img src="${designImage}" alt="تصميم الطلب" style="max-width: 100%; border: 2px solid #ddd; border-radius: 10px;" />
+                          </div>
+                        </div>
+                      `,
+                      designImage: designImage,
+                      designUpload: uploadedDesign,
+                    }),
+                  });
+                  if (res.ok) {
+                    const result = await res.json();
+                    if (result.success) {
+                      setOrderStatus('success');
+                      resetForm();
+                      setLastOrderForm(values); // Save last order form
+                      // Save to localStorage as well
+                      const saveData = {
+                        selectedCloth,
+                        selectedColor,
+                        selectedSize,
+                        isFront,
+                        designs,
+                        lastOrderForm: values,
+                      };
+                      localStorage.setItem('tshirtEditorSave', JSON.stringify(saveData));
+                      Swal.fire({
+                        icon: 'success',
+                        title: 'تم, لبس الهنا يا غالي ',
+                        text: 'سيتم التواصل معك قريباً    .',
+                        confirmButtonText: 'حسناً'
+                      });
+                      setShowOrderModal(false);
+                    } else {
+                      setOrderStatus('error');
+                      Swal.fire({
+                        icon: 'error',
+                        title: 'حدث خطأ أثناء الإرسال',
+                        text: 'يرجى المحاولة مرة أخرى أو التواصل معنا مباشرة.',
+                        confirmButtonText: 'حسناً'
+                      });
+                    }
+                  } else {
+                    setOrderStatus('error');
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'حدث خطأ أثناء الإرسال',
+                      text: 'يرجى المحاولة مرة أخرى أو التواصل معنا مباشرة.',
+                      confirmButtonText: 'حسناً'
+                    });
+                  }
+                } catch (error) {
+                  setOrderStatus('error');
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'حدث خطأ أثناء الإرسال',
+                    text: 'يرجى المحاولة مرة أخرى أو التواصل معنا مباشرة.',
+                    confirmButtonText: 'حسناً'
+                  });
+                }
+                setSubmitting(false);
+              }}
+            >
+              {({ isSubmitting }) => (
+                <Form  className="order-form">
+                  <label className='m-0' style={{display:"inline"}} htmlFor="name"> <span style={{ color: 'red' }}>*</span> الأسم ثلاثي </label>
+                  <Field id="name" type="text" name="name" required placeholder="الأسم بالكامل " />
+                  <ErrorMessage style={{color:"red"}} name="name" component="div" className="form-error" />
+                  <label style={{display:"inline"}} htmlFor="phone">  <span style={{ color: 'red' }}>*</span> رقم الهاتف</label>
+                  <Field id="phone" type="tel" name="phone" required placeholder=" ادخل رقم هاتفك"/>
+                  <ErrorMessage style={{color:"red"}} name="phone" component="div" className="form-error" />
+                  <label style={{display:"inline"}} htmlFor="address"> <span style={{ color: 'red' }}>*</span>العنوان</label>
+                  <Field id="address" type="text" name="address" required placeholder="العنوان بالتفصيل" />
+                  <ErrorMessage style={{color:"red"}} name="address" component="div" className="form-error" />
+                  <label htmlFor="email">البريد الإلكتروني (اختياري)</label>
+                  <Field id="email" type="email" name="email" placeholder="example@email.com" />
+                  <ErrorMessage style={{color:"red"}} name="email" component="div" className="form-error" />
+                  <div className="order-summary-row">
+                    <div className="order-summary-color">
+                      <span className="color-circle" style={{ background: colorOptions.find(c => c.name === selectedColor)?.hex || '#fff', border: '2px solid #BCBCBC', boxShadow: '0 0 0 2px #BCBCBC' }}></span>
+                    </div>
+                    <div className="order-summary-size">
+                      <button className="size-btn p-2 " style={{ pointerEvents: 'none', margin: 0,backgroundColor:'#BCBCBC' }}>{selectedSize}</button>
+                    </div>
+                    <div className="order-summary-cloth">
+                      <button className="top-bar-icon selected" style={{ pointerEvents: 'none', margin: 0, background: '#BCBCBC', border: 'none', boxShadow: '0 0 0 2px #1976d2' }}>
+                        {selectedCloth === 'hoodie' && <PiHoodieThin />}
+                        {selectedCloth === 'tshirt' && <PiTShirtLight />}
+                        {selectedCloth === 'pants' && <PiPantsLight />}
+                        {selectedCloth === 'polo' && <GiPoloShirt />}
+                      </button>
+                    </div>
+                  </div>
+                  <button type="submit" className="order-submit-btn" disabled={isSubmitting || orderStatus==='sending'}>
+                    {orderStatus==='sending' ? 'يتم الإرسال...' : 'إرسال الطلب'}
+                  </button>
+                </Form>
+              )}
+            </Formik>
+          </div>
+        </div>
+      )}
       <div className="editor-flex-row">
         {/* Sidebar */}
         <div className="sidebar">
           <div className="logo-area">
-            <span className="logo-t-sign">T-SIGN</span>
+            <img src="/logo.png" alt="T-SIGN logo" style={{ width: '50%', display: 'block', margin: '0 auto' }} />
           </div>
           <div className="sidebar-section">
             <div className="sidebar-label text-center">colors</div>
             <div className="color-row-bg">
               <div className="color-row">
-                {['#ffffff', '#000000', '#0080ff', '#ff0000', '#00bcd4', '#ffc107', '#a259d9'].map(color => (
+                {(selectedCloth === 'pants' ? pantsColors : colorOptions).map(color => (
                   <button
-                    key={color}
-                    className={`color-circle${tshirtColor === color ? ' selected' : ''}`}
-                    style={{ background: color }}
-                    onClick={() => setTshirtColor(color)}
+                    key={color.name}
+                    className={`color-circle${selectedColor === color.name ? ' selected' : ''}`}
+                    style={{ background: color.hex }}
+                    onClick={() => setSelectedColor(color.name)}
                   >
-                    {tshirtColor === color && (
+                    {selectedColor === color.name && (
                       <span className="color-check"><FaCheckCircle /></span>
                     )}
                   </button>
@@ -405,7 +605,7 @@ function App() {
             <div className="sidebar-label text-center">design</div>
             <div className="design-upload-box">
               <div className="design-upload-content" onClick={() => fileInputRef.current.click()}>
-                <span className="upload-icon" role="img" aria-label="upload">📤</span>
+                <span className="upload-icon icon " style={{color:"blue"}} role="img" aria-label="upload"><CiImageOn/></span>
                 <div className="upload-text">اختيار تصميم - طباعة<br /><span className="upload-sub">أو اسحب التصميم هنا</span></div>
               </div>
               {selectedDesign && (
@@ -417,8 +617,8 @@ function App() {
             </div>
           </div>
           <div className="sidebar-section sidebar-actions">
-            <button className="sidebar-btn outline">حفظ</button>
-            <button className="sidebar-btn filled">اطلب للشراء </button>
+            <button className="sidebar-btn outline" onClick={handleSave} type="button">حفظ</button>
+            <button className="sidebar-btn filled w-70" onClick={() => setShowOrderModal(true)}> شراء </button>
           </div>
         </div>
         {/* Main Editor Area */}
@@ -441,39 +641,84 @@ function App() {
                 <PiPantsLight />
                 <div>بنطلون</div>
               </div>
-              <div className={`top-bar-icon${selectedCloth === 'jacket' ? ' selected' : ''}`} onClick={() => setSelectedCloth('jacket')}>
-                {selectedCloth === 'jacket' && <span className="cloth-check"><FaCheckCircle /></span>}
-                <TbJacket />
-                <div>جاكيت</div>
+              <div className={`top-bar-icon${selectedCloth === 'polp' ? ' selected' : ''}`} onClick={() => setSelectedCloth('polo')}>
+                {selectedCloth === 'polo' && <span className="cloth-check"><FaCheckCircle /></span>}
+                <GiPoloShirt />
+                <div>بولو </div>
               </div>
             </div>
           </div>
-          
-          <div className="canvas-area" style={{ position: 'relative' }}>
+          <div className="canvas-area" style={{ position: 'relative' }} ref={designAreaRef} onClick={() => setSelectedDesignId(null)}>
             {/* Zoom icons */}
-            <div className="zoom-icons">
-              <button className="zoom-btn"><FaSearchPlus /></button>
-              <button className="zoom-btn"><FaSearchMinus /></button>
-            </div>
-            {/* Camera icon top right */}
-            <div className="camera-icon"><IoCameraReverseOutline />
-            </div>
-            <canvas ref={canvasRef} id="design-canvas" width="600" height="600" />
-            {/* HTML handles for selected design */}
-            {selectedDesign && designRect && (
+            {!isExporting && (
+              <div className="zoom-icons">
+                {/* <button className="zoom-btn"><FaSearchPlus /></button>
+                <button className="zoom-btn"><FaSearchMinus /></button> */}
+              </div>
+            )}
+            {/* Camera icon top right (toggle front/back for t-shirt/hoodie) */}
+            {!isExporting && (selectedCloth === 'tshirt' || selectedCloth === 'hoodie') && (
+              <div className="camera-icon" onClick={e => { e.stopPropagation(); setIsFront(f => !f); }} style={{ cursor: 'pointer' }}>
+                <IoCameraReverseOutline />
+              </div>
+            )}
+            {/* Static clothing image */}
+            <img
+              src={getClothImageSrc()}
+              alt={selectedCloth}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                zIndex: 1,
+                pointerEvents: 'none',
+                userSelect: 'none',
+              }}
+              draggable={false}
+            />
+            {/* Overlay user designs as absolutely positioned images */}
+            {designs.map(design => (
+              <img
+                key={design.id}
+                src={design.src}
+                alt="design"
+                style={{
+                  position: 'absolute',
+                  left: design.x - (design.width * design.scale) / 2,
+                  top: design.y - (design.height * design.scale) / 2,
+                  width: design.width * design.scale,
+                  height: design.height * design.scale,
+                  transform: `rotate(${design.rotation}rad)` + (design.id === selectedDesignId ? ' scale(1.05)' : ''),
+                  zIndex: 2,
+                  cursor: design.id === selectedDesignId ? 'move' : 'pointer',
+                  boxShadow: design.id === selectedDesignId ? '0 0 0 2px #1976d2' : 'none',
+                  transition: 'box-shadow 0.2s',
+                  pointerEvents: 'auto',
+                }}
+                onMouseDown={e => { e.stopPropagation(); setSelectedDesignId(design.id); setIsDragging(true); dragOffset.current = { x: e.nativeEvent.offsetX - (design.width * design.scale) / 2, y: e.nativeEvent.offsetY - (design.height * design.scale) / 2 }; }}
+                onClick={e => { e.stopPropagation(); setSelectedDesignId(design.id); }}
+                draggable={false}
+              />
+            ))}
+            {/* Only show handles if a design is selected and not exporting */}
+            {selectedDesign && designRect && !isExporting && (
               <>
                 {/* Resize handle (bottom right) */}
                 <div
                   className="design-resize-handle"
                   style={{
-                    position: 'fixed',
+                    position: 'absolute',
                     left: designRect.left + designRect.width - 16,
                     top: designRect.top + designRect.height - 16,
                     zIndex: 10,
                     cursor: 'nwse-resize',
+                    touchAction: 'none',
                   }}
-                  onMouseDown={() => setHandleDrag('resize')}
-                  onTouchStart={() => setHandleDrag('resize')}
+                  onMouseDown={e => { e.stopPropagation(); setHandleDrag('resize'); }}
+                  onTouchStart={e => { e.stopPropagation(); setHandleDrag('resize'); }}
                 >
                   <FaArrowsAlt />
                 </div>
@@ -481,33 +726,38 @@ function App() {
                 <div
                   className="design-rotate-handle"
                   style={{
-                    position: 'fixed',
+                    position: 'absolute',
                     left: designRect.left + designRect.width / 2 - 12,
                     top: designRect.top - 32,
                     zIndex: 10,
                     cursor: 'grab',
+                    touchAction: 'none',
                   }}
-                  onMouseDown={() => setHandleDrag('rotate')}
-                  onTouchStart={() => setHandleDrag('rotate')}
+                  onMouseDown={e => { e.stopPropagation(); setHandleDrag('rotate'); }}
+                  onTouchStart={e => { e.stopPropagation(); setHandleDrag('rotate'); }}
                 >
                   <FaSyncAlt />
                 </div>
               </>
             )}
             {/* Canvas controls bottom left */}
-            <div className="canvas-controls">
-              <button className="canvas-ctrl-btn"><FaMousePointer /></button>
-              <button className="canvas-ctrl-btn"><FaHandPaper /></button>
-              <button className="canvas-ctrl-btn"><FaUndo /></button>
-            </div>
+            {!isExporting && (
+              <div className="canvas-controls">
+                {/* <button className="canvas-ctrl-btn"><FaMousePointer /></button>
+                <button className="canvas-ctrl-btn"><FaHandPaper /></button>
+                <button className="canvas-ctrl-btn"><FaUndo /></button> */}
+              </div>
+            )}
             {/* Download button bottom right */}
-            <button className="download-btn-green" onClick={saveDesign}><FaDownload style={{marginLeft: 4}} /> تنزيل صورة</button>
+            {!isExporting && (
+              <button className="download-btn-green " onClick={e => { e.stopPropagation(); saveDesign(); }}><FaDownload style={{marginLeft: 4}} /> تنزيل كصورة</button>
+            )}
           </div>
 
           {showAdBanner && (
-            <div className="ad-banner">
-              مساحة إعلانية
-              <button className="ad-banner-close" aria-label="إغلاق الإعلان" onClick={() => setShowAdBanner(false)}><FaTimes /></button>
+            <div className=" my-5" style={{height:100}} >
+              {/* مساحة إعلانية */}
+              {/* <button className="ad-banner-close" aria-label="إغلاق الإعلان" onClick={() => setShowAdBanner(false)}><FaTimes /></button> */}
             </div>
           )}
         </div>

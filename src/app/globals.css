@@ -2,3 +2,7 @@
 .nextjs-toast, [data-nextjs-toast] {
   display: none !important;
 }
+
+body {
+  font-family: var(--font-cairo), Arial, Helvetica, sans-serif;
+}

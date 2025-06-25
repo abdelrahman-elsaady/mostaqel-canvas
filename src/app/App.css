@@ -51,7 +51,9 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f5f5;
+  background: #ffffff;
+  margin: 0;
+  padding: 0;
 }
 
 .top-bar {
@@ -131,14 +133,14 @@ body {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  margin-top: 18px;
+  /* margin-top: 18px; */
   gap: 0;
 }
 
 .sidebar {
   width: 270px;
   background: #e5e5e5;
-  border-radius: 24px 0 0 24px;
+  border-radius: 0px 24px 0 24px;
   padding: 28px 18px 18px 18px;
   display: flex;
   flex-direction: column;
@@ -149,7 +151,7 @@ body {
 .logo-area {
   width: 100%;
   text-align: center;
-  margin-bottom: 18px;
+  /* margin-bottom: 18px; */
 }
 .logo-t-sign {
   font-family: 'Courier New', Courier, monospace;
@@ -159,7 +161,7 @@ body {
   font-weight: bold;
   text-shadow: 1px 1px 0 #fff, 2px 2px 0 #b30000;
   border-bottom: 2px dashed #b30000;
-  padding-bottom: 6px;
+  /* padding-bottom: 6px; */
   display: inline-block;
 }
 .sidebar-section {
@@ -376,12 +378,13 @@ body {
   box-shadow: 0 4px 16px rgba(0,0,0,0.07);
   margin: 0 auto;
   position: relative;
-  width: 600px;
+  width: 80%;
   height: 600px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 #design-canvas {
   border: none;
@@ -467,8 +470,8 @@ body {
 }
 .download-btn-green {
   position: absolute;
-  bottom: 18px;
-  right: 18px;
+  bottom: 0;
+  right: 0;
   background: #43d854;
   color: #fff;
   border: none;
@@ -482,7 +485,7 @@ body {
   gap: 6px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.07);
   transition: background 0.2s, color 0.2s;
-  z-index: 2;
+  z-index: 1000;
 }
 .download-btn-green:hover {
   background: #2bbf3a;
@@ -748,4 +751,453 @@ body {
     height: 18px;
     font-size: 0.7rem;
   }
+}
+
+/* Modal styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.order-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border: 2px solid #2196f3;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: #f0f0f0;
+}
+
+.modal-title {
+  text-align: center;
+  color: #2a6cff;
+  font-size: 1.8rem;
+  margin-bottom: 25px;
+  font-weight: bold;
+}
+
+.order-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.order-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.order-form input,
+.order-form textarea {
+  padding: 14px;
+  border: 1.5px solid #bdbdbd;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border 0.2s;
+  background: #f8fafd;
+}
+
+.order-form input:focus,
+.order-form textarea:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.order-form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.order-submit-btn {
+  background: #2a6cff;
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 10px;
+}
+
+.order-submit-btn:hover:not(:disabled) {
+  background: #1746a2;
+}
+
+.order-submit-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.order-success {
+  background: #d4edda;
+  color: #155724;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid #c3e6cb;
+}
+
+.order-error {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid #f5c6cb;
+}
+
+.order-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 18px;
+  margin: 18px 0 0 0;
+  padding: 0 2px;
+}
+
+.order-summary-color .color-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 2px #1976d2;
+  display: inline-block;
+}
+
+.order-summary-size .size-btn.selected {
+  background: #fff;
+  color: #1976d2;
+  border: 2px solid #1976d2;
+  font-weight: bold;
+  font-size: 1.1rem;
+  min-width: 38px;
+  min-height: 38px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px #1976d2;
+}
+
+.order-summary-cloth .top-bar-icon.selected {
+  background: #fff;
+  color: #1976d2;
+  border: none;
+  box-shadow: 0 0 0 2px #1976d2;
+  font-size: 1.5rem;
+  border-radius: 12px;
+  min-width: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 700px) {
+  .order-modal {
+    width: 98%;
+    padding: 12px;
+    margin: 4px;
+  }
+  .order-summary-row {
+    gap: 10px;
+    margin: 10px 0 0 0;
+  }
+  .order-summary-color .color-circle,
+  .order-summary-size .size-btn.selected,
+  .order-summary-cloth .top-bar-icon.selected {
+    min-width: 28px;
+    min-height: 28px;
+    width: 28px;
+    height: 28px;
+    font-size: 1.1rem;
+  }
+}
+
+@keyframes swal-spin {
+  from { transform: rotatey(0deg); }
+  to { transform: rotatey(360deg); }
+}
+.swal2-loader-popup .swal2-html-container {
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Enhanced Mobile Responsiveness --- */
+
+@media (max-width: 600px) {
+  html, body {
+    font-size: 15px;
+    overflow-x: hidden;
+  }
+  .main-app-container {
+    padding: 0;
+    min-width: 0;
+    width: 100vw;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  .editor-flex-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 0;
+  }
+  .sidebar {
+    padding: 6px 2px;
+    min-width: 0;
+    width: 100vw;
+    border-radius: 0 0 16px 16px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    box-shadow: none;
+    gap: 0;
+  }
+  .sidebar-section {
+    margin-bottom: 8px;
+    width: 100%;
+  }
+  .color-row-bg {
+    width: 100%;
+    min-width: 0;
+    padding: 4px 2px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #1976d2 #e5e5e5;
+  }
+  .color-row {
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+  }
+  .color-circle {
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+    margin: 2px;
+  }
+  .color-check {
+    width: 18px;
+    height: 18px;
+    font-size: 1rem;
+    top: -10px;
+    right: -10px;
+  }
+  .size-grid {
+    gap: 8px 6px;
+  }
+  .size-btn {
+    font-size: 1rem;
+    padding: 10px 0;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .design-upload-box {
+    min-height: 60px;
+    padding: 0;
+  }
+  .delete-bar {
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .delete-design-btn {
+    font-size: 2rem;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .main-editor-area {
+    border-radius: 0 0 16px 16px;
+    min-height: unset;
+    padding: 8px 0 0 0;
+    width: 100vw;
+    max-width: 100vw;
+    align-items: stretch;
+  }
+  .editor-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0 8px 0 0;
+    margin-bottom: 8px;
+    gap: 8px;
+  }
+  .editor-title {
+    margin-left: 8px;
+    font-size: 1.2rem;
+    margin-bottom: 0;
+  }
+  .top-bar-icons-bg {
+    margin-left: 0;
+    padding: 6px 8px;
+    gap: 10px;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .top-bar-icon {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 1.2rem;
+  }
+  .top-bar-icon svg {
+    font-size: 1.5rem;
+  }
+  .top-bar-icon div {
+    font-size: 0.95rem;
+  }
+  .canvas-area {
+    width: 100vw;
+    max-width: 100vw;
+    height: 220px;
+    min-width: 0;
+    border-radius: 12px;
+    padding: 0;
+    overflow: hidden;
+  }
+  #design-canvas {
+    max-width: 100vw;
+    max-height: 220px;
+    border-radius: 12px;
+  }
+  .zoom-icons, .camera-icon, .canvas-controls, .download-btn-green {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+    padding: 0;
+  }
+  .download-btn-green {
+    font-size: 1rem;
+    padding: 8px 14px;
+    border-radius: 14px;
+    right: 8px;
+    bottom: 8px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .ad-banner {
+    font-size: 1rem;
+    padding: 10px 0;
+    margin-top: 10px;
+    border-radius: 0 0 12px 12px;
+    min-height: 44px;
+  }
+  .ad-banner-close {
+    right: 8px;
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+  }
+  .design-resize-handle, .design-rotate-handle {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+  }
+  .sidebar-btn {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 1rem;
+    padding: 10px 0;
+  }
+}
+
+@media (max-width: 400px) {
+  html, body {
+    font-size: 13px;
+  }
+  .canvas-area {
+    height: 140px;
+    border-radius: 8px;
+  }
+  #design-canvas {
+    max-height: 140px;
+    border-radius: 8px;
+  }
+  .download-btn-green {
+    font-size: 0.85rem;
+    padding: 4px 6px;
+    border-radius: 8px;
+    right: 2px;
+    bottom: 2px;
+  }
+  .ad-banner {
+    font-size: 0.85rem;
+    padding: 6px 0;
+    border-radius: 0 0 8px 8px;
+    min-height: 36px;
+  }
+  .ad-banner-close {
+    right: 2px;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+  .design-resize-handle, .design-rotate-handle {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+}
+
+/* Always show horizontal scrollbar for color row on mobile */
+@media (max-width: 700px) {
+  .color-row-bg {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #1976d2 #e5e5e5;
+  }
+  .color-row::-webkit-scrollbar {
+    height: 6px;
+    background: #e5e5e5;
+  }
+  .color-row::-webkit-scrollbar-thumb {
+    background: #1976d2;
+    border-radius: 3px;
+  }
+}
+
+/* Prevent horizontal scroll everywhere */
+html, body, .main-app-container, .editor-flex-row, .main-editor-area, .canvas-area {
+  overflow-x: hidden !important;
+  min-width: 0;
+  max-width: 100vw;
 }
