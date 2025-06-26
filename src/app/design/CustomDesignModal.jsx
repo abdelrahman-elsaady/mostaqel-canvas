@@ -26,7 +26,7 @@ const CustomDesignModal = ({ show, onClose }) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  to: 'abodaelsheemy22@gmail.com',
+                  to: 'alysayed208@gmail.com',
                   subject: `طلب تصميم مخصص - ${values.name}`,
                   text: `طلب تصميم مخصص\nالاسم: ${values.name}\nرقم الهاتف: ${values.phone}\nالبريد الإلكتروني: ${values.email}\nالطلب بالكامل: ${values.details}`,
                   html: `
