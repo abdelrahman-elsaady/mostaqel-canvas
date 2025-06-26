@@ -2,6 +2,7 @@ import { Cairo } from "next/font/google";
 import 'bootstrap/dist/css/bootstrap.min.css';
 // import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import "./globals.css";
+import Footer from "./Footer.jsx";
 
 const cairo = Cairo({
   subsets: ["latin", "arabic"],
@@ -20,6 +21,7 @@ export default function RootLayout({ children }) {
     <html lang="ar" dir="">
       <body className={cairo.className}>
         {children}
+        <Footer />
       </body>
     </html>
   );

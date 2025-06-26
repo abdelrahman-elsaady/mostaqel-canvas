@@ -1,0 +1,96 @@
+.notfoundContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+.notfoundContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 700px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 12px 0 12px;
+}
+.notfoundTextBlock {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 0px;
+}
+.notfound404 {
+  font-size: 5rem;
+  font-weight: bold;
+  color: #d32f2f;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 0 #fff, 3px 3px 0 #d32f2f, 0 2px 8px #b30000;
+  font-family: 'Impact', 'Arial Black', Arial, sans-serif;
+  margin-right: 8px;
+  margin-left: 8px;
+  line-height: 1;
+}
+.notfoundTSign {
+  font-size: 3.2rem;
+  font-weight: bold;
+  color: #d32f2f;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 0 #fff, 3px 3px 0 #d32f2f, 0 2px 8px #b30000;
+  font-family: 'Impact', 'Arial Black', Arial, sans-serif;
+  margin-right: 8px;
+  margin-left: 8px;
+  line-height: 1;
+}
+.notfoundImage {
+  width: 90%;
+  max-width: 90vw;
+  /* margin: 0 auto 18px auto; */
+  display: block;
+}
+.notfoundMsg {
+  color: #444;
+  font-size: .8rem;
+  /* margin: 18px 0 28px 0; */
+  text-align: center;
+  font-family: 'Cairo', Arial, sans-serif;
+}
+.notfoundBtn {
+  background: #d32f2f;
+  color: #fff;
+  border: none;
+  border-radius: 22px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: 12px 38px;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(211,47,47,0.10);
+  transition: background 0.2s, color 0.2s;
+  margin-top: 8px;
+  display: inline-block;
+}
+.notfoundBtn:hover {
+  background: #b71c1c;
+  color: #fff;
+}
+@media (max-width: 600px) {
+  .notfound404 {
+    font-size: 2.7rem;
+  }
+  .notfoundTSign {
+    font-size: 1.5rem;
+  }
+  .notfoundImage {
+    width: 180px;
+  }
+  .notfoundContent {
+    padding: 12px 2px 0 2px;
+  }
+  .notfoundBtn {
+    font-size: 1rem;
+    padding: 8px 18px;
+  }
+} 

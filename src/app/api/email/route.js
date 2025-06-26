@@ -5,7 +5,7 @@ export async function POST(req) {
     console.log(process.env.EMAIL_USER);
 
   try {
-    const { to, subject, text, html, designImage, designUpload } = await req.json();
+    const { to, subject, text, html, designImage, designImageFront, designImageBack, designImageFrontOriginals, designImageBackOriginals, designUpload } = await req.json();
 console.log(to);
 console.log(process.env.EMAIL_USER);
 
@@ -19,18 +19,36 @@ console.log(process.env.EMAIL_USER);
     });
 
     const attachments = [];
-    if (designImage) {
+    if (designImageFront) {
       attachments.push({
-        filename: 'tshirt-design.png',
-        content: designImage.split(',')[1],
+        filename: 'tshirt-front.png',
+        content: designImageFront.split(',')[1],
         encoding: 'base64',
       });
     }
-    if (designUpload) {
+    if (designImageBack) {
       attachments.push({
-        filename: 'uploaded-design.png',
-        content: designUpload.split(',')[1],
+        filename: 'tshirt-back.png',
+        content: designImageBack.split(',')[1],
         encoding: 'base64',
+      });
+    }
+    if (Array.isArray(designImageFrontOriginals)) {
+      designImageFrontOriginals.forEach((src, idx) => {
+        attachments.push({
+          filename: `tshirt-front-design-${idx + 1}.png`,
+          content: src.split(',')[1],
+          encoding: 'base64',
+        });
+      });
+    }
+    if (Array.isArray(designImageBackOriginals)) {
+      designImageBackOriginals.forEach((src, idx) => {
+        attachments.push({
+          filename: `tshirt-back-design-${idx + 1}.png`,
+          content: src.split(',')[1],
+          encoding: 'base64',
+        });
       });
     }
 
