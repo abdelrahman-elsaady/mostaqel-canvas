@@ -625,7 +625,7 @@ function App() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      to: 'abodaelsheemy22@gmail.com',
+                      to: 'alysayed208@gmail.com',
                       subject: `طلب جديد - ${values.name} - نوع التصميم: ${values.designType === 'print' ? 'طباعة' : values.designType === 'embroidery' ? 'تطريز' : ''}`,
                       text: `\nطلب جديد من العميل:\nالاسم: ${values.name}\nالبريد الإلكتروني: ${values.email}\nرقم الهاتف: ${values.phone}\nالعنوان: ${values.address}\nالمقاس: ${selectedSize}\nاللون: ${selectedColor}\nنوع القماش: ${selectedCloth}\nنوع التصميم: ${values.designType === 'print' ? 'طباعة' : values.designType === 'embroidery' ? 'تطريز' : ''}`,
                       html: `
