@@ -21,6 +21,8 @@ export default function RootLayout({ children }) {
     <html lang="ar" dir="">
       <body className={cairo.className}>
     <body import Script from "next/script";>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2393776775889919"
+     crossorigin="anonymous"></script>
         {children}
         <Footer />
       </body>
