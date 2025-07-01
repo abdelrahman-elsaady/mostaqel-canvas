@@ -20,6 +20,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ar" dir="">
       <body className={cairo.className}>
+    <body import Script from "next/script";>
         {children}
         <Footer />
       </body>
