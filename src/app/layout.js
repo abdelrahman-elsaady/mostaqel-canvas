@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 // import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import "./globals.css";
 import Footer from "./Footer.jsx";
+import Script from "next/script";
 
 const cairo = Cairo({
   subsets: ["latin", "arabic"],
@@ -19,15 +20,15 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="ar" dir="">
+      <head>
+        <Script
+          strategy="afterInteractive"
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2393776775889919"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className={cairo.className}>
-    <body import Script from "next/script";>
-  <head>
-  <script
-    async
-    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2393776775889919"
-    crossOrigin="anonymous"
-  ></script>
-</head>
         {children}
         <Footer />
       </body>
