@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>أسعار التوصيل</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: #fff;
+      direction: rtl;
+      padding: 30px;
+      margin: 0;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .tab {
+      border: 1px solid #aaa;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background-color: transparent;
+    }
+    .tab.active {
+      background-color: #fddede;
+      color: #d00;
+      border-color: #d00;
+    }
+    .content {
+      margin-top: 40px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.4s ease;
+      text-align: center;
+    }
+    .content.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .area-title {
+      font-size: 32px;
+      font-weight: bold;
+      color: #888;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .area-title img {
+      width: 40px;
+      height: 40px;
+    }
+    .price-box {
+      border: 1px solid #000;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 600px;
+      margin: auto;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 20px 0;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+    }
+    .row:last-child {
+      border-bottom: none;
+    }
+    .label {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .value {
+      font-size: 28px;
+    }
+    .icon {
+      width: 20px;
+      height: 20px;
+      position: relative;
+    }
+    .icon img {
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+    .icon:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 120%;
+      right: 50%;
+      transform: translateX(50%);
+      background: #333;
+      color: #fff;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="tabs">
+    <div class="tab" onclick="showPrices('cairo', event)">القاهرة والجيزة</div>
+    <div class="tab" onclick="showPrices('alex', event)">الاسكندرية والبحيرة</div>
+    <div class="tab" onclick="showPrices('delta', event)">الدلتا وقنا</div>
+    <div class="tab" onclick="showPrices('north_upper', event)">شمال الصعيد</div>
+    <div class="tab" onclick="showPrices('south_upper', event)">جنوب الصعيد</div>
+    <div class="tab" onclick="showPrices('north_coast', event)">الساحل الشمال</div>
+    <div class="tab" onclick="showPrices('sinai', event)">سيناء والوادي الجديد</div>
+  </div>
+
+  <div id="priceContent" class="content"></div>
+
+  <script>
+    const data = {
+      cairo: { name: 'القاهرة والجيزة', delivery: 91.2, exchange: 91.2, return: 91.2 },
+      alex: { name: 'الاسكندرية والبحيرة', delivery: 96.9, exchange: 114, return: 102.6 },
+      delta: {
+        name: 'الدلتا والقناة', delivery: 103.7, exchange: 120.8, return: 102.6,
+        desc: 'الدقهلية، القليوبية، الغربية، كفر الشيخ، المنوفية ،الشرقية، دمياط، الإسماعيلية، بورسعيد والسويس'
+      },
+      north_upper: {
+        name: 'شمال الصعيد', delivery: 117.4, exchange: 134.5, return: 102.6,
+        desc: 'الفيوم، بني سويف، المنيا، أسيوط، سوهاج'
+      },
+      south_upper: {
+        name: 'جنوب الصعيد', delivery: 132.2, exchange: 149.3, return: 102.6,
+        desc: 'قنا، الأقصر، أسوان، البحر الأحمر، مطروح'
+      },
+      north_coast: {
+        name: 'الساحل الشمالي', delivery: 135.7, exchange: 152.8, return: 102.6 },
+      sinai: {
+        name: 'سيناء والوادي الجديد', delivery: 150.5, exchange: 167.6, return: 102.6,
+        desc: 'شمال سيناء، جنوب سيناء، الوادي الجديد'
+      }
+    };
+
+    function showPrices(area, e) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      e.target.classList.add('active');
+      const d = data[area];
+      document.getElementById('priceContent').innerHTML = `
+        <div class="area-title">
+          <img src="https://i.ibb.co/SDKPTw0x/fast.png" alt="truck icon" />
+          ${d.name}
+        </div>
+        <div class="price-box">
+          <div class="row">
+            <div class="label">توصيل</div>
+            <div class="icon" data-tooltip="أسعار شحنات \"التوصيل\" التي سوف يتم توصيلها لك.">
+              <img src="https://i.ibb.co/JwYyS4Y5/question.png" alt="?">
+            </div>
+            <div class="value">${d.delivery} ج.م</div>
+          </div>
+          <div class="row">
+            <div class="label">ارجاع</div>
+            <div class="icon" data-tooltip="أسعار شحنات \"الإرجاع\" التي سوف يتم استلامها منك لإرجاعها لنا">
+              <img src="https://i.ibb.co/JwYyS4Y5/question.png" alt="?">
+            </div>
+            <div class="value">${d.return} ج.م</div>
+          </div>
+          <div class="row">
+            <div class="label">تبديل</div>
+            <div class="icon" data-tooltip="أسعار شحنات \"الاستبدال\" التي سوف يتم استبدالها.">
+              <img src="https://i.ibb.co/JwYyS4Y5/question.png" alt="?">
+            </div>
+            <div class="value">${d.exchange} ج.م</div>
+          </div>
+        </div>
+      `;
+      document.getElementById('priceContent').classList.add('show');
+    }
+  </script>
+</body>
+</html>
