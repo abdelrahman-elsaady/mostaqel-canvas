@@ -26,7 +26,7 @@ const Footer = () => (
   }}>
     <div style={{ textAlign: 'center', marginBottom: 4, fontWeight: 500 }}>
       Intellectual property rights and all rights of the site are reserved.<br />
-      حقوق الملكية الفكرية و جميع حقوق الموقع محفوظة
+      حقوق الملكية الفكرية و جميع حقوق الموقع محفوظة info@t-sign.shop
     </div>
     <div style={{ display: 'flex', gap: 18, justifyContent: 'center', alignItems: 'center', marginTop: 4 }}>
       {mediaIcons.map((item, idx) => (
